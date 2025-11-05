@@ -1,0 +1,40 @@
+// Simple daily scrim notifier bot
+const { Client, GatewayIntentBits } = require('discord.js');
+const cron = require('node-cron');
+require('dotenv').config();
+
+const client = new Client({
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages]
+});
+
+// 👇 Your daily scrim schedule
+const schedule = {
+  "Monday": ["17:45", "⚔️ FearX ESP 6 PM Scrim! Get ready!"],
+  "Tuesday": ["20:00", "🎯 9 PM Scrim — Time to shine!"],
+  "Wednesday": ["20:00", "🎯 9 PM Scrim — Focus and win!"],
+  "Thursday": ["17:45", "🔥 6 PM Scrim — Full power!"],
+  "Friday": ["21:00", "🏆 9 PM Scrim — Let’s dominate!"],
+  "Saturday": ["20:30", "💪 8:30 PM Scrim — Be ready!"],
+  "Sunday": ["18:00", "🎮 6 PM Scrim — Weekend rush!"]
+};
+
+client.once('ready', () => {
+  console.log(`✅ Logged in as ${client.user.tag}`);
+
+  // Schedule message every day
+  for (const [day, [time, message]] of Object.entries(schedule)) {
+    const [hour, minute] = time.split(':');
+    // cron format → minute hour * * weekday(0=Sunday)
+    const weekday = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"].indexOf(day);
+    
+    cron.schedule(`${minute} ${hour} * * ${weekday}`, async () => {
+      const channel = client.channels.cache.get(process.env.CHANNEL_ID);
+      if (channel) {
+        await channel.send(message);
+        console.log(`📢 Sent message for ${day}`);
+      }
+    });
+  }
+});
+
+client.login(process.env.TOKEN);
